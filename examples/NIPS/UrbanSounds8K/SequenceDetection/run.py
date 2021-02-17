@@ -14,8 +14,10 @@ from network import Network
 import torch
 
 
-def my_test(model_to_test, test_queries, test_functions=None):
-    res = test(model_to_test, test_queries, test_functions=test_functions)
+def my_test(model_to_test, test_queries, test_functions=None, to_file=None, confusion_index=None):
+    res = test(
+        model_to_test, test_queries, test_functions=test_functions, to_file=to_file, confusion_index=confusion_index
+    )
 
     # res += test_MNIST(model_to_test)
 
@@ -60,45 +62,73 @@ def run(training_data, test_data, problog_files, problog_train_files=(), problog
                     *args, **kwargs, in_training=False
                 )
             },
+            to_file='to_file.txt'
         ),
         snapshot_iter=len(queries)
     )
 
 
-def run_linear(training_data, test_data, problog_files, problog_train_files=(), problog_test_files=()):
+def evaluate_queries(model_to_eval, eval_queries):
+    for query in eval_queries:
+        print(query)
+
+        for k, v in model_to_eval.solve(query).items():
+            print('{}: {}'.format(k, v[0]))
+
+            for k2, v2 in v[1].items():
+                print("{}: {}".format(k2[1], v2.tolist()))
+
+        print()
+
+
+def run_linear(training_data, test_data, problog_files, problog_train_files=(), problog_test_files=(), eval_data=None,
+               problog_eval_files=(), nn_model=SoundVGGish, snapshot_name='SequenceDetectionSnapshots/model',
+               neural_predicate=neural_predicate_vggish, confusion_index=None, epochs=10):
     queries = load(training_data)
     test_queries = load(test_data)
+    if eval_data:
+        eval_queries = load(eval_data)
+    else:
+        eval_queries = []
 
     # network = SoundLinearNet()
     # network = SoundCNNet()
-    network = SoundVGGish()
+    network = nn_model()
 
     problog_string = add_files_to(problog_files, '')
 
     problog_train_string = add_files_to(problog_train_files, problog_string)
     problog_test_string = add_files_to(problog_test_files, problog_string)
+    problog_eval_string = add_files_to(problog_eval_files, problog_string)
 
-    net = Network(network, 'sound_net', neural_predicate_vggish)
+    net = Network(network, 'sound_net', neural_predicate)
     net.optimizer = torch.optim.Adam(network.parameters(), lr=0.001)
     model_to_train = Model(problog_train_string, [net], caching=False)
     optimizer = Optimizer(model_to_train, 2)
 
     model_to_test = Model(problog_test_string, [net], caching=False)
 
+    model_to_eval = Model(problog_eval_string, [net], caching=False)
+
     train_model(
         model_to_train,
         queries,
-        nr_epochs=10,
+        nr_epochs=epochs,
         optimizer=optimizer,
         test_iter=len(queries),
         test=lambda _: my_test(
             model_to_test,
-            test_queries
+            test_queries,
+            to_file='to_file.txt',
+            confusion_index=confusion_index
         ),
         log_iter=500,
-        snapshot_iter=len(queries),
-        snapshot_name=' SequenceDetectionSnapshots/model'
+        snapshot_iter=len(queries) * epochs,
+        snapshot_name=snapshot_name,
+        shuffle=False
     )
+
+    evaluate_queries()
 
 
 if __name__ == '__main__':
@@ -112,7 +142,9 @@ if __name__ == '__main__':
             'examples/NIPS/UrbanSounds8K/SequenceDetection/ProbLogFiles/event_defs.pl'
         ],
         problog_train_files=['examples/NIPS/UrbanSounds8K/SequenceDetection/in_train_data.txt'],
-        problog_test_files=['examples/NIPS/UrbanSounds8K/SequenceDetection/in_test_data.txt']
+        problog_test_files=['examples/NIPS/UrbanSounds8K/SequenceDetection/in_test_data.txt'],
+        eval_data='examples/NIPS/UrbanSounds8K/SequenceDetection/eval_data.txt',
+        problog_eval_files=['examples/NIPS/UrbanSounds8K/SequenceDetection/in_eval_data.txt']
     )
     # run(
     #     'examples/NIPS/UrbanSounds8K/SequenceDetection/sounds_train_data_tiny.txt',

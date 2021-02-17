@@ -12,24 +12,47 @@ preprocessable = preprocessable[preprocessable['preprocessable']]
 preprocessable_filenames = set(preprocessable['filename'])
 
 
+# def sound_true_values(dataset):
+#     return [
+#         (
+#             "'examples/NIPS/UrbanSounds8K{}'".format(sample['path'][2:]),
+#             sample['class']
+#         )
+#         for sample in dataset.dataset.data_arr
+#         if sample['path'][3:] in preprocessable_filenames
+#     ]
+
+
 def sound_true_values(dataset):
     return [
         (
-            "'examples/NIPS/UrbanSounds8K{}'".format(sample['path'][2:]),
+            "'examples/NIPS/UrbanSounds8K/UrbanSounds8K/fold{}/{}'".format(sample['fold'], sample['slice_file_name']),
             sample['class']
         )
-        for sample in dataset.dataset.data_arr
-        if sample['path'][3:] in preprocessable_filenames
+        for i, sample in dataset.iterrows()
     ]
 
 
+# def get_urban_sound_datasets(base_folder='..'):
+#     config = json.load(open('{}/my-config_generate.json'.format(base_folder)))
+#
+#     data_manager = getattr(data_module, config['data']['type'])(config['data'])
+#
+#     t_loader = data_manager.get_loader('train', transfs=None)
+#     v_loader = data_manager.get_loader('val', transfs=None)
+#
+#     return t_loader, v_loader
+
+
+def get_urban_sound_datasets(base_folder='..', test_fold=10):
+    t_loader = preprocessable[preprocessable['fold'] != test_fold]
+    v_loader = preprocessable[preprocessable['fold'] == test_fold]
+
+    return t_loader, v_loader
+
+
 def generate_data():
-    config = json.load(open('../my-config_generate.json'))
-
-    data_manager = getattr(data_module, config['data']['type'])(config['data'])
-
-    t_loader = data_manager.get_loader('train', transfs=None)
-    v_loader = data_manager.get_loader('val', transfs=None)
+    t_loader, v_loader = get_urban_sound_datasets()
 
     def scenario_function(digit, last_digits, threshold, available_digits):
         if digit == last_digits[-1]:

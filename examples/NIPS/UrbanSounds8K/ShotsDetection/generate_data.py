@@ -6,6 +6,7 @@ import data as data_module
 from examples.NIPS.MNIST.complex_sequence_detection.generate_data import gather_examples
 import pandas as pd
 
+from examples.NIPS.UrbanSounds8K.SequenceDetection.generate_data import get_urban_sound_datasets
 
 preprocessable = pd.read_pickle('/home/roigvilamalam/projects/Urban-Sound-Classification/preprocessable.pkl')
 preprocessable = preprocessable[preprocessable['preprocessable']]
@@ -87,12 +88,7 @@ def gather_examples_shots(dataset, in_filename, initiated_filename, holds_filena
 
 
 def generate_data():
-    config = json.load(open('../my-config_generate.json'))
-
-    data_manager = getattr(data_module, config['data']['type'])(config['data'])
-
-    t_loader = data_manager.get_loader('train', transfs=None)
-    v_loader = data_manager.get_loader('val', transfs=None)
+    t_loader, v_loader = get_urban_sound_datasets()
 
     gather_examples_shots(
         t_loader, 'in_train_data.txt', 'init_train_data.txt', 'holds_train_data.txt', 'sounds_train_data.txt',

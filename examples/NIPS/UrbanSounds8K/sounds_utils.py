@@ -42,6 +42,36 @@ class SoundVGGish(nn.Module):
         return self.net(x)
 
 
+class SoundVGGishDemo(SoundVGGish):
+    def __init__(self, n_classes=10):
+        super(SoundVGGishDemo, self).__init__(n_classes)
+
+        self.mlp = nn.Sequential(
+            nn.Linear(in_features=128, out_features=128),
+            nn.ReLU(),
+            nn.Linear(in_features=128, out_features=128),
+            nn.ReLU(),
+        )
+
+    def parameters(self, recurse=True):
+        return self.net.parameters()
+
+    def forward(self, x):
+        x = self.mlp(x)
+
+        return super(SoundVGGishDemo, self).forward(x)
+
+
+def vggish_perform_call(network, features):
+    features = features.unsqueeze(0)
+
+    # Use the neural network to get the classification of the audio
+    res = network.net(features.float())
+
+    # Return the result
+    return res.squeeze(0)
+
+
 def neural_predicate_vggish(network, path, use_saved_preprocessed=True):
     preprocessed_filename = 'vggish_preprocessed/' + os.path.splitext(os.path.basename(str(path)[1:-1]))[0] + '.pt'
 
@@ -64,13 +94,13 @@ def neural_predicate_vggish(network, path, use_saved_preprocessed=True):
         if use_saved_preprocessed:
             torch.save(features, preprocessed_filename)
 
-    features = features.unsqueeze(0)
+    return vggish_perform_call(network, features)
 
-    # Use the neural network to get the classification of the audio
-    res = network.net(features.float())
 
-    # Return the result
-    return res.squeeze(0)
+def neural_predicate_demo(network, path):
+    features = torch.load(str(path)[1:-1])
+
+    return vggish_perform_call(network, features)
 
 
 class SoundLinearNet(nn.Module):

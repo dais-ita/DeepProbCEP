@@ -20,7 +20,7 @@ CONFUSION_INDEX = {
         'sequence2=true': 8,
         'sequence3=true': 9,
         'sequence4=true': 10,
-   },
+    },
     'holdsAt': {
         'X': 0,
         'false': 1,
@@ -153,7 +153,7 @@ TEST_METHODS = {
 }
 
 
-def test(model, test_queries, test_functions=None, confusion_index=None, test_methods=None):
+def test(model, test_queries, test_functions=None, confusion_index=None, test_methods=None, to_file=None):
     # Substitute the functions to the test ones
     if confusion_index is None:
         confusion_index = CONFUSION_INDEX
@@ -170,7 +170,7 @@ def test(model, test_queries, test_functions=None, confusion_index=None, test_me
 
     with torch.no_grad():
         confusion_dict = get_confusion_matrix(
-            model, confusion_index, test_queries, test_methods
+            model, confusion_index, test_queries, test_methods, to_file=to_file
         )
 
     res_list = []
@@ -180,6 +180,8 @@ def test(model, test_queries, test_functions=None, confusion_index=None, test_me
         accuracy = calculate_accuracy(confusion)
 
         print(k)
+        # Print the classes in the order they have in the confusion matrix
+        print(list(map(lambda b: b[1], sorted(map(lambda a: (a[1], a[0]), confusion_index[k].items())))))
         print(confusion)
 
         f1_text = 'F1 {}: {}'.format(k, f1)

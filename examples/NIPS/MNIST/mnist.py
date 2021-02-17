@@ -69,5 +69,5 @@ def neural_predicate(network, i, dataset='train'):
     return output.squeeze(0)
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5, ))])
-mnist_train_data = torchvision.datasets.MNIST(root=dir_path+'/../../../data/MNIST', train=True, download=True,transform=transform)
-mnist_test_data = torchvision.datasets.MNIST(root=dir_path+'/../../../data/MNIST', train=False, download=True,transform=transform)
+mnist_train_data = torchvision.datasets.MNIST(root='~/datasets/Image/MNIST', train=True, download=True,transform=transform)
+mnist_test_data = torchvision.datasets.MNIST(root='~/datasets/Image/MNIST', train=False, download=True,transform=transform)

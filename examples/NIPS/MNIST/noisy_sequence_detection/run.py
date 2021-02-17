@@ -1,3 +1,5 @@
+import time
+
 import os
 import re
 import sys
@@ -5,7 +7,8 @@ import sys
 import click
 
 from examples.NIPS.ActivityDetection.prob_ec_testing import test
-from examples.NIPS.MNIST.mnist import MNIST_Net, test_MNIST, neural_predicate
+from examples.NIPS.MNIST.mnist import MNIST_Net, test_MNIST
+from examples.NIPS.MNIST.mnist import neural_predicate as default_neural_predicate
 
 sys.path.append('../../../')
 from train import train_model, train, batch_train_model, train_batch
@@ -26,15 +29,20 @@ def add_files_to(problog_files, problog_string):
     return problog_string
 
 
-def my_test(model_to_test, test_queries, test_functions=None):
-    res = test(model_to_test, test_queries, test_functions=test_functions)
+def my_test(model_to_test, test_queries, test_functions=None, to_file=None, confusion_index=None):
+    res = test(
+        model_to_test, test_queries, test_functions=test_functions, to_file=to_file, confusion_index=confusion_index
+    )
 
     # res += test_MNIST(model_to_test)
 
     return res
 
 
-def run(training_data, test_data, problog_files, problog_train_files=(), problog_test_files=()):
+def run(training_data, test_data, problog_files, problog_train_files=(), problog_test_files=(), confusion_index=None,
+        neural_predicate=default_neural_predicate, snapshots=True):
+    start = time.time()
+
     queries = load(training_data)
     test_queries = load(test_data)
 
@@ -42,21 +50,29 @@ def run(training_data, test_data, problog_files, problog_train_files=(), problog
 
     problog_train_string = add_files_to(problog_train_files, problog_string)
     problog_test_string = add_files_to(problog_test_files, problog_string)
+    print('Problog files prepared at {}'.format(time.time() - start))
 
     network = MNIST_Net()
+    print('MNIST_Net prepared at {}'.format(time.time() - start))
     net = Network(network, 'mnist_net', neural_predicate)
+    print('Network prepared at {}'.format(time.time() - start))
     net.optimizer = torch.optim.Adam(network.parameters(), lr=0.001)
-    model_to_train = Model(problog_train_string, [net], caching=False)
+    print('net.optimizer prepared at {}'.format(time.time() - start))
+    model_to_train = Model(problog_train_string, [net], caching=True)
+    print('Model to train prepared at {}'.format(time.time() - start))
     optimizer = Optimizer(model_to_train, 2)
+    print('Optimizer prepared at {}'.format(time.time() - start))
 
     model_to_test = Model(problog_test_string, [net], caching=False)
+    print('Model to test prepared at {}'.format(time.time() - start))
 
     train_model(
         model_to_train,
         queries,
-        1,
+        2,
         optimizer,
-        test_iter=len(queries),
+        test_iter=len(queries) * 2,
+        # test_iter=100,
         test=lambda _: my_test(
             model_to_test,
             test_queries,
@@ -65,50 +81,69 @@ def run(training_data, test_data, problog_files, problog_train_files=(), problog
                     *args, **kwargs, dataset='test'
                 )
             },
+            to_file='to_file.txt',
+            confusion_index=confusion_index
         ),
-        log_iter=1000,
-        snapshot_iter=len(queries)
+        log_iter=len(queries),
+        snapshot_iter=len(queries) * 5 if snapshots else None,
+        snapshot_name='snapshots/model'
     )
+
+    # my_test(
+    #     model_to_test, test_queries, test_functions={
+    #         'mnist_net': lambda *args, **kwargs: neural_predicate(
+    #             *args, **kwargs, dataset='test'
+    #         )
+    #     }
+    # )
 
 
 @click.command()
 @click.option('--scenario', default='')
 @click.option('--noise', default='')
-def execute_scenarios(scenario, noise):
-    for folder in sorted(os.listdir(os.curdir)):
+@click.option('--directory', default='./scenarios100')
+@click.option('--snapshots/--no-snapshots', default=True)
+def execute_scenarios(scenario, noise, directory, snapshots):
+    for folder in sorted(os.listdir(directory)):
         if folder.startswith('scenario') and re.search(scenario, folder):
             print("#######################################################################################")
             print(folder)
 
-            prob_ec_cached = '{}/prob_ec_cached.pl'.format(folder)
+            prob_ec_cached = '{}/{}/prob_ec_cached.pl'.format(directory, folder)
             if not os.path.isfile(prob_ec_cached):
                 prob_ec_cached = 'ProbLogFiles/prob_ec_cached.pl'
 
-            event_defs = '{}/event_defs.pl'.format(folder)
+            event_defs = '{}/{}/event_defs.pl'.format(directory, folder)
             if not os.path.isfile(event_defs):
                 event_defs = 'ProbLogFiles/event_defs.pl'
 
-            for subfolder in sorted(os.listdir(folder)):
+            for subfolder in sorted(os.listdir('{}/{}'.format(directory, folder))):
+                if subfolder == '__pycache__':
+                    continue
                 # if subfolder != 'noise_1_00':
                 #     continue
 
-                if re.search(noise, subfolder) and os.path.isdir('{}/{}'.format(folder, subfolder)):
+                if re.search(noise, subfolder) and os.path.isdir('{}/{}/{}'.format(directory, folder, subfolder)):
                     print('===================================================================================')
                     print(subfolder)
 
                     run(
-                        '{}/{}/init_train_data.txt'.format(folder, subfolder),
-                        '{}/{}/init_digit_test_data.txt'.format(folder, subfolder),
-                        [
+                        training_data='{}/{}/{}/init_train_data_clean.txt'.format(directory, folder, subfolder),
+                        # test_data='{}/{}/{}/init_digit_test_data.txt'.format(directory, folder, subfolder),
+                        test_data='{}/{}/{}/init_test_data.txt'.format(directory, folder, subfolder),
+                        # test_data='{}/{}/init_train_data.txt'.format(folder, subfolder),
+                        problog_files=[
                             prob_ec_cached,
                             event_defs
                         ],
                         problog_train_files=[
-                            '{}/{}/in_train_data.txt'.format(folder, subfolder)
+                            '{}/{}/{}/in_train_data.txt'.format(directory, folder, subfolder)
                         ],
                         problog_test_files=[
-                            '{}/{}/in_test_data.txt'.format(folder, subfolder)
-                        ]
+                            '{}/{}/{}/in_test_data.txt'.format(directory, folder, subfolder)
+                            # '{}/{}/in_train_data.txt'.format(folder, subfolder)
+                        ],
+                        snapshots=snapshots
                     )
 
 

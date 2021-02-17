@@ -1,21 +1,18 @@
-import json
-import random
+import argparse
 
-from examples.NIPS.MNIST.noisy_sequence_detection.scenario004.generate_data import get_random_assignment
-from examples.NIPS.MNIST.noisy_sequence_detection.scenario100_2.generate_data import generate_data, \
+from examples.NIPS.MNIST.noisy_sequence_detection.old_scenarios.scenario004.generate_data import get_random_assignment
+from examples.NIPS.MNIST.noisy_sequence_detection.scenarios100.scenario100_2.generate_data import generate_data, \
     get_correct_digit_for_initiated_at
 from examples.NIPS.MNIST.noisy_sequence_detection.scenario104_2.generate_data import get_initiated_at_scenario104
-from examples.NIPS.UrbanSounds8K.SequenceDetection.generate_data import sound_true_values
-import data as data_module
-
+from examples.NIPS.UrbanSounds8K.SequenceDetection.generate_data import sound_true_values, get_urban_sound_datasets
 
 if __name__ == '__main__':
-    config = json.load(open('../../my-config_generate.json'))
+    parser = argparse.ArgumentParser(description='Execute the strawman approach.')
+    parser.add_argument('test_fold', metavar='N', type=int, help='the fold to use for testing')
 
-    data_manager = getattr(data_module, config['data']['type'])(config['data'])
+    args = parser.parse_args()
 
-    t_loader = data_manager.get_loader('train', transfs=None)
-    v_loader = data_manager.get_loader('val', transfs=None)
+    t_loader, v_loader = get_urban_sound_datasets(base_folder='../..', test_fold=args.test_fold)
 
     all_events = [
         'air_conditioner',

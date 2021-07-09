@@ -14,7 +14,7 @@ def read_init_file(filename, skip):
                 skipped += 1
                 continue
 
-            line_class = line[12:].split(',')[0]
+            line_class = line.split('(', 1)[1].split(',')[0]
 
             options.setdefault(line_class, [])
             options[line_class].append(line)

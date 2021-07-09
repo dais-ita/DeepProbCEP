@@ -42,6 +42,22 @@ class SoundVGGish(nn.Module):
         return self.net(x)
 
 
+class SmallSoundVGGish(nn.Module):
+    def __init__(self, n_classes=10):
+        super(SmallSoundVGGish, self).__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(in_features=128, out_features=10),
+            nn.ReLU(),
+            nn.Linear(in_features=10, out_features=n_classes),
+
+            nn.Softmax(dim=1)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
 class SoundVGGishDemo(SoundVGGish):
     def __init__(self, n_classes=10):
         super(SoundVGGishDemo, self).__init__(n_classes)
@@ -73,13 +89,15 @@ def vggish_perform_call(network, features):
 
 
 def neural_predicate_vggish(network, path, use_saved_preprocessed=True):
-    preprocessed_filename = 'vggish_preprocessed/' + os.path.splitext(os.path.basename(str(path)[1:-1]))[0] + '.pt'
+    preprocessed_filename = '~/datasets/audio/UrbanSound8K/vggish_preprocessed/' + os.path.splitext(os.path.basename(str(path)[1:-1]))[0] + '.pt'
+    preprocessed_filename = os.path.expanduser(preprocessed_filename)
 
     if use_saved_preprocessed and os.path.exists(preprocessed_filename):
         # Try to load the features from a file
         features = torch.load(preprocessed_filename)
     else:
         print(path, preprocessed_filename)
+        print(os.path.exists(preprocessed_filename))
 
         raise Exception
 

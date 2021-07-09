@@ -1,6 +1,9 @@
 import torch
 import math
 import signal
+
+from tqdm import tqdm
+
 from logger import Logger
 import time
 from logic import term2list2
@@ -92,6 +95,96 @@ def train_batch(model, optimizer, batch_queries, eps=1e-8, use_cuda=False):
     optimizer.step()
 
     return loss
+
+
+def epoch_train_model(model, queries, nr_epochs, optimizer, loss_function=train, validation=None, log_epoch=1,
+                      snapshot_name='model', snapshot_epoch=None, shuffle=True, patience=None):
+    accumulated_loss = 0
+    logger = Logger()
+    start = time.time()
+    print(
+        "Training for {} epochs ({} iterations). {}".format(
+            nr_epochs,
+            nr_epochs * len(queries),
+            'With patience of {} epochs.'.format(patience) if patience else 'Without early stopping'
+        )
+    )
+
+    best_val_acc = 0.0
+    best_val_epoch = None
+    best_val_filename = None
+
+    for epoch in range(1, nr_epochs + 1):
+        epoch_start = time.time()
+        print("Epoch", epoch)
+
+        q_indices = list(range(len(queries)))
+        if shuffle:
+            random.shuffle(q_indices)
+
+        for q in tqdm(q_indices):
+            q = queries[q]
+            loss = loss_function(model, optimizer, q)
+            accumulated_loss += loss
+            optimizer.step()
+        optimizer.step_epoch()
+
+        if validation is not None:
+            val_acc = validation(model)
+
+            optimizer.clear()
+
+            if val_acc > best_val_acc or best_val_epoch is None:
+                fname = '{}_epoch_{:04d}.mdl'.format(snapshot_name, epoch)
+
+                print(
+                    'Validation accuracy improved from {} to {}. Saving new best model to {}'.format(
+                        best_val_acc, val_acc, fname
+                    )
+                )
+
+                best_val_epoch = epoch
+                best_val_filename = fname
+                best_val_acc = val_acc
+
+                model.save_state(fname)
+            else:
+                print('Validation accuracy has not improved since epoch {} ({})'.format(best_val_epoch, best_val_acc))
+        elif snapshot_name and snapshot_epoch and epoch % snapshot_epoch == 0:
+            fname = '{}_epoch_{:04d}.mdl'.format(snapshot_name, epoch)
+
+            print('Saving model to {}'.format(fname))
+
+            best_val_filename = fname
+
+            model.save_state(fname)
+
+        if epoch % log_epoch == 0:
+            print('Epoch: ', epoch, '\tAverage Loss: ', accumulated_loss / (len(queries) * log_epoch))
+            logger.log('time', epoch, time.time() - start)
+            logger.log('loss', epoch, accumulated_loss / (len(queries) * log_epoch))
+            for k in model.parameters:
+                logger.log(str(k), epoch, model.parameters[k])
+            accumulated_loss = 0
+
+        print('Epoch time: ', time.time() - epoch_start)
+
+        if validation is not None and patience:
+            if epoch - best_val_epoch >= patience:
+                print('Valdiation performance has not improved for {} epochs, early stopping.'.format(patience))
+                break
+
+    if validation is not None:
+        print(
+            'Best performance on epoch {}. Weights saved on {}'.format(
+                best_val_epoch, best_val_filename
+            )
+        )
+    else:
+        print('Trained for {} epochs. Weights saved on {}'.format(nr_epochs, best_val_filename))
+        best_val_epoch = nr_epochs
+
+    return logger, best_val_epoch, best_val_filename
 
 
 def train_model(model,queries,nr_epochs,optimizer, loss_function = train, test_iter=1000,test=None,log_iter=100,snapshot_iter=None,snapshot_name='model',shuffle=True):

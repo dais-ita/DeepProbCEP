@@ -1,12 +1,13 @@
 import json
 
 import torchvision
-import data as data_module
 from examples.NIPS.generate_data_utils import gather_examples
 import pandas as pd
 
 
-preprocessable = pd.read_pickle('/home/roigvilamalam/projects/Urban-Sound-Classification/preprocessable.pkl')
+preprocessable = pd.read_pickle(
+    '/home/roigvilamalam/projects/deepproblog/examples/NIPS/UrbanSounds8K/preprocessable.pkl'
+)
 preprocessable = preprocessable[preprocessable['preprocessable']]
 
 preprocessable_filenames = set(preprocessable['filename'])
@@ -26,7 +27,7 @@ preprocessable_filenames = set(preprocessable['filename'])
 def sound_true_values(dataset):
     return [
         (
-            "'examples/NIPS/UrbanSounds8K/UrbanSounds8K/fold{}/{}'".format(sample['fold'], sample['slice_file_name']),
+            "'~/datasets/audio/UrbanSounds8K/audio/fold{}/{}'".format(sample['fold'], sample['slice_file_name']),
             sample['class']
         )
         for i, sample in dataset.iterrows()
@@ -49,6 +50,14 @@ def get_urban_sound_datasets(base_folder='..', test_fold=10):
     v_loader = preprocessable[preprocessable['fold'] == test_fold]
 
     return t_loader, v_loader
+
+
+def get_urban_sound_datasets_with_validation(validation_fold=9, test_fold=10):
+    training = preprocessable[(preprocessable['fold'] != validation_fold) & (preprocessable['fold'] != test_fold)]
+    validation = preprocessable[preprocessable['fold'] == validation_fold]
+    testing = preprocessable[preprocessable['fold'] == test_fold]
+
+    return training, validation, testing
 
 
 def generate_data():

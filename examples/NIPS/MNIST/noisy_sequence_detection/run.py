@@ -9,9 +9,10 @@ import click
 from examples.NIPS.ActivityDetection.prob_ec_testing import test
 from examples.NIPS.MNIST.mnist import MNIST_Net, test_MNIST
 from examples.NIPS.MNIST.mnist import neural_predicate as default_neural_predicate
+from examples.NIPS.MNIST.noisy_sequence_detection.cep_deep_pre_comp import CEPDeepPreComp
 
 sys.path.append('../../../')
-from train import train_model, train, batch_train_model, train_batch
+from train import train_model, train, batch_train_model, train_batch, epoch_train_model
 from test_utils import get_confusion_matrix, calculate_f1
 from data_loader import load
 from model import Model, Var
@@ -109,42 +110,48 @@ def execute_scenarios(scenario, noise, directory, snapshots):
             print("#######################################################################################")
             print(folder)
 
-            prob_ec_cached = '{}/{}/prob_ec_cached.pl'.format(directory, folder)
-            if not os.path.isfile(prob_ec_cached):
-                prob_ec_cached = 'ProbLogFiles/prob_ec_cached.pl'
+            run_folder(directory, folder, noise, snapshots)
 
-            event_defs = '{}/{}/event_defs.pl'.format(directory, folder)
-            if not os.path.isfile(event_defs):
-                event_defs = 'ProbLogFiles/event_defs.pl'
 
-            for subfolder in sorted(os.listdir('{}/{}'.format(directory, folder))):
-                if subfolder == '__pycache__':
-                    continue
-                # if subfolder != 'noise_1_00':
-                #     continue
+def run_folder(directory, folder, noise, snapshots):
+    prob_ec_cached = get_problog_file_for(directory, folder, 'prob_ec_cached.pl')
+    event_defs = get_problog_file_for(directory, folder, 'event_defs.pl')
 
-                if re.search(noise, subfolder) and os.path.isdir('{}/{}/{}'.format(directory, folder, subfolder)):
-                    print('===================================================================================')
-                    print(subfolder)
+    for subfolder in sorted(os.listdir('{}/{}'.format(directory, folder))):
+        if subfolder == '__pycache__':
+            continue
+        # if subfolder != 'noise_1_00':
+        #     continue
 
-                    run(
-                        training_data='{}/{}/{}/init_train_data_clean.txt'.format(directory, folder, subfolder),
-                        # test_data='{}/{}/{}/init_digit_test_data.txt'.format(directory, folder, subfolder),
-                        test_data='{}/{}/{}/init_test_data.txt'.format(directory, folder, subfolder),
-                        # test_data='{}/{}/init_train_data.txt'.format(folder, subfolder),
-                        problog_files=[
-                            prob_ec_cached,
-                            event_defs
-                        ],
-                        problog_train_files=[
-                            '{}/{}/{}/in_train_data.txt'.format(directory, folder, subfolder)
-                        ],
-                        problog_test_files=[
-                            '{}/{}/{}/in_test_data.txt'.format(directory, folder, subfolder)
-                            # '{}/{}/in_train_data.txt'.format(folder, subfolder)
-                        ],
-                        snapshots=snapshots
-                    )
+        if re.search(noise, subfolder) and os.path.isdir('{}/{}/{}'.format(directory, folder, subfolder)):
+            print('===================================================================================')
+            print(subfolder)
+
+            run(
+                training_data='{}/{}/{}/init_train_data_clean_500.txt'.format(directory, folder, subfolder),
+                # training_data='{}/{}/{}/digits_train_data.txt'.format(directory, folder, subfolder),
+                val_data='{}/{}/{}/init_val_data.txt'.format(directory, folder, subfolder),
+                # val_data='{}/{}/{}/init_val_data_clean.txt'.format(directory, folder, subfolder),
+                # val_data='{}/{}/{}/digits_val_data.txt'.format(directory, folder, subfolder),
+                test_data='{}/{}/{}/init_digit_test_data.txt'.format(directory, folder, subfolder),
+                # test_data='{}/{}/{}/init_test_data.txt'.format(directory, folder, subfolder),
+                # test_data='{}/{}/init_train_data.txt'.format(folder, subfolder),
+                problog_files=[
+                    prob_ec_cached,
+                    event_defs
+                ],
+                problog_train_files=[
+                    '{}/{}/{}/in_train_data.txt'.format(directory, folder, subfolder)
+                ],
+                problog_val_files=[
+                    '{}/{}/{}/in_val_data.txt'.format(directory, folder, subfolder)
+                ],
+                problog_test_files=[
+                    '{}/{}/{}/in_test_data.txt'.format(directory, folder, subfolder)
+                    # '{}/{}/in_train_data.txt'.format(folder, subfolder)
+                ],
+                snapshots=snapshots
+            )
 
 
 if __name__ == '__main__':

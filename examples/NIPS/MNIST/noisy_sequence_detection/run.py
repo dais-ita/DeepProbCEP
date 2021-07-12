@@ -39,63 +39,88 @@ def my_test(model_to_test, test_queries, test_functions=None, to_file=None, conf
     return res
 
 
-def run(training_data, test_data, problog_files, problog_train_files=(), problog_test_files=(), confusion_index=None,
-        neural_predicate=default_neural_predicate, snapshots=True):
+def my_validation(model_to_validate, validation_queries):
+    res = test(
+        model_to_validate, validation_queries
+    )
+
+    return res[1][1]
+
+
+def run(training_data, val_data, test_data, problog_files, problog_train_files=(), problog_val_files=(),
+        problog_test_files=(), confusion_index=None, neural_predicate=default_neural_predicate, snapshots=True):
     start = time.time()
 
+    scenario = training_data.split('/')[1]
+
     queries = load(training_data)
+    val_queries = load(val_data)
     test_queries = load(test_data)
 
+    problog_train_string, problog_val_string, problog_test_string = make_problog_strings(
+        problog_files, problog_test_files, problog_train_files, problog_val_files
+    )
+    print('Problog files prepared at {}'.format(time.time() - start))
+
+    model_to_train, model_to_val, model_to_test, optimizer = make_train_val_test_models(
+        neural_predicate, problog_train_string, problog_val_string, problog_test_string, training_caching=True
+    )
+
+    _, best_epoch, best_weights_fname = epoch_train_model(
+        model_to_train,
+        queries,
+        100,
+        optimizer,
+        validation=lambda _: my_validation(
+            model_to_val,
+            val_queries
+        ),
+        # validation=None,
+        log_epoch=1,
+        snapshot_name='snapshots/model_{}'.format(scenario),
+        patience=10
+    )
+
+    model_to_test.load_state(best_weights_fname)
+
+    my_test(
+        model_to_test, test_queries, test_functions={
+            'mnist_net': lambda *args, **kwargs: neural_predicate(
+                *args, **kwargs, dataset='test'
+            )
+        }
+    )
+
+
+def make_problog_strings(problog_files, problog_test_files, problog_train_files, problog_val_files):
     problog_string = add_files_to(problog_files, '')
 
     problog_train_string = add_files_to(problog_train_files, problog_string)
+    problog_val_string = add_files_to(problog_val_files, problog_string)
     problog_test_string = add_files_to(problog_test_files, problog_string)
-    print('Problog files prepared at {}'.format(time.time() - start))
 
+    return problog_train_string, problog_val_string, problog_test_string
+
+
+def make_train_val_test_models(neural_predicate, problog_train_string, problog_val_string, problog_test_string,
+                               training_caching=False):
     network = MNIST_Net()
-    print('MNIST_Net prepared at {}'.format(time.time() - start))
     net = Network(network, 'mnist_net', neural_predicate)
-    print('Network prepared at {}'.format(time.time() - start))
     net.optimizer = torch.optim.Adam(network.parameters(), lr=0.001)
-    print('net.optimizer prepared at {}'.format(time.time() - start))
-    model_to_train = Model(problog_train_string, [net], caching=True)
-    print('Model to train prepared at {}'.format(time.time() - start))
+    model_to_train = Model(problog_train_string, [net], caching=training_caching)
     optimizer = Optimizer(model_to_train, 2)
-    print('Optimizer prepared at {}'.format(time.time() - start))
 
+    model_to_val = Model(problog_val_string, [net], caching=False)
     model_to_test = Model(problog_test_string, [net], caching=False)
-    print('Model to test prepared at {}'.format(time.time() - start))
 
-    train_model(
-        model_to_train,
-        queries,
-        2,
-        optimizer,
-        test_iter=len(queries) * 2,
-        # test_iter=100,
-        test=lambda _: my_test(
-            model_to_test,
-            test_queries,
-            test_functions={
-                'mnist_net': lambda *args, **kwargs: neural_predicate(
-                    *args, **kwargs, dataset='test'
-                )
-            },
-            to_file='to_file.txt',
-            confusion_index=confusion_index
-        ),
-        log_iter=len(queries),
-        snapshot_iter=len(queries) * 5 if snapshots else None,
-        snapshot_name='snapshots/model'
-    )
+    return model_to_train, model_to_val, model_to_test, optimizer
 
-    # my_test(
-    #     model_to_test, test_queries, test_functions={
-    #         'mnist_net': lambda *args, **kwargs: neural_predicate(
-    #             *args, **kwargs, dataset='test'
-    #         )
-    #     }
-    # )
+
+def get_problog_file_for(directory, folder, filename):
+    prob_ec_cached = '{}/{}/{}'.format(directory, folder, filename)
+    if not os.path.isfile(prob_ec_cached):
+        prob_ec_cached = 'ProbLogFiles/{}'.format(filename)
+    return prob_ec_cached
 
 
 @click.command()

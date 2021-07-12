@@ -9,7 +9,6 @@ import click
 from examples.NIPS.ActivityDetection.prob_ec_testing import test
 from examples.NIPS.MNIST.mnist import MNIST_Net, test_MNIST
 from examples.NIPS.MNIST.mnist import neural_predicate as default_neural_predicate
-from examples.NIPS.MNIST.noisy_sequence_detection.cep_deep_pre_comp import CEPDeepPreComp
 
 sys.path.append('../../../')
 from train import train_model, train, batch_train_model, train_batch, epoch_train_model

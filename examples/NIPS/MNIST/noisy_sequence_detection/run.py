@@ -152,7 +152,7 @@ def run_folder(directory, folder, noise, snapshots):
             print(subfolder)
 
             run(
-                training_data='{}/{}/{}/init_train_data_clean_500.txt'.format(directory, folder, subfolder),
+                training_data='{}/{}/{}/init_train_data_clean.txt'.format(directory, folder, subfolder),
                 # training_data='{}/{}/{}/digits_train_data.txt'.format(directory, folder, subfolder),
                 val_data='{}/{}/{}/init_val_data.txt'.format(directory, folder, subfolder),
                 # val_data='{}/{}/{}/init_val_data_clean.txt'.format(directory, folder, subfolder),

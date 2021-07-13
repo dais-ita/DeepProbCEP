@@ -60,7 +60,6 @@ def run(training_data, val_data, test_data, problog_files, problog_train_files=(
     problog_train_string, problog_val_string, problog_test_string = make_problog_strings(
         problog_files, problog_test_files, problog_train_files, problog_val_files
     )
-    print('Problog files prepared at {}'.format(time.time() - start))
 
     model_to_train, model_to_val, model_to_test, optimizer = make_train_val_test_models(
         neural_predicate, problog_train_string, problog_val_string, problog_test_string, training_caching=True

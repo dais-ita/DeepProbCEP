@@ -1,4 +1,0 @@
-multilabel(0, _).
-multilabel(1, _).
-multilabel(2, _).
-multilabel(3, _).

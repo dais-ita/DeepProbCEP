@@ -1,1 +1,0 @@
-nn(multilabel_net,[X],Y,[a, b, c]) :: multilabel(X,Y).

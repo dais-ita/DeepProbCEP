@@ -2,7 +2,7 @@ import random
 
 from examples.NIPS.MNIST.noisy_sequence_detection.noisy_scenarios.scenario109_2.generate_data import \
     get_initiated_at_scenario109
-from examples.NIPS.MNIST.noisy_sequence_detection.old_scenarios.scenario001 import generate_data
+from examples.NIPS.generate_data_utils import generate_data
 from examples.NIPS.MNIST.noisy_sequence_detection.noisy_scenarios.scenario103_2.generate_data import \
     get_correct_digit_for_initiated_at
 

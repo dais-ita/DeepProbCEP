@@ -1,4 +1,4 @@
-from examples.NIPS.MNIST.noisy_sequence_detection.old_scenarios.scenario001 import generate_data
+from examples.NIPS.generate_data_utils import generate_data
 
 
 def get_correct_digit_for_initiated_at(digit, last_digits, threshold, available_digits):

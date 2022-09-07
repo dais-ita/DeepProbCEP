@@ -1,4 +1,4 @@
-from examples.NIPS.MNIST.noisy_sequence_detection.old_scenarios.scenario004.generate_data import get_random_assignment
+from examples.NIPS.generate_data_utils import get_random_assignment
 from examples.NIPS.MNIST.noisy_sequence_detection.scenarios100.scenario100_2.generate_data import generate_data, \
     get_correct_digit_for_initiated_at
 from examples.NIPS.MNIST.noisy_sequence_detection.noisy_scenarios.scenario104_2.generate_data import get_initiated_at_scenario104

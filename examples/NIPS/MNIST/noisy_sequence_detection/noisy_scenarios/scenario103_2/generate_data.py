@@ -1,6 +1,6 @@
 import random
 
-from examples.NIPS.MNIST.noisy_sequence_detection.old_scenarios.scenario001 import generate_data
+from examples.NIPS.generate_data_utils import generate_data
 
 
 def get_initiated_at_scenario103(digit, last_digits, threshold, available_digits):

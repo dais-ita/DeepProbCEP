@@ -7,7 +7,7 @@ import click
 from examples.NIPS.ActivityDetection.prob_ec_testing import test
 from examples.NIPS.UrbanSounds8K import neural_predicate_vggish
 from train import epoch_train_model
-from examples.NIPS.MNIST.noisy_sequence_detection.run import make_problog_strings
+from examples.NIPS.MNIST.noisy_sequence_detection.run import make_problog_strings, get_problog_file_for, run_directory
 from examples.NIPS.UrbanSounds8K.SequenceDetection.run import run_linear, my_test
 from examples.NIPS.UrbanSounds8K.sounds_utils import *
 from model import Model
@@ -17,10 +17,12 @@ from network import Network
 sys.path.append('../../../')
 
 
-def audio_validation(model_to_validate, validation_queries):
+def audio_validation(model_to_validate, validation_queries, confusion_index=None):
     res = test(
-        model_to_validate, validation_queries
+        model_to_validate, validation_queries, confusion_index=confusion_index
     )
+
+    print(res)
 
     return res[1][1]
 
@@ -28,6 +30,7 @@ def audio_validation(model_to_validate, validation_queries):
 def run_audio_with_validation(training_data, val_data, test_data, problog_files, problog_train_files=(),
                               problog_val_files=(), problog_test_files=(), neural_predicate=neural_predicate_vggish,
                               nn_model=SoundVGGish):
+    raise Exception("Deprecated")
     scenario = training_data.split('/')[1]
 
     queries = load(training_data)
@@ -71,51 +74,32 @@ def run_audio_with_validation(training_data, val_data, test_data, problog_files,
 
 
 @click.command()
-@click.argument('start_path', type=click.Path(exists=True, dir_okay=True, file_okay=False))
 @click.option('--scenario', default='')
 @click.option('--noise', default='')
-def execute_scenarios(start_path, scenario, noise):
-    for folder in sorted(os.listdir(start_path)):
-        if folder.startswith('scenario') and re.search(scenario, folder):
-            print("#######################################################################################")
-            print(folder)
+@click.option('--directory', default='./scenarios100')
+@click.option('--max_epochs', default=100)
+@click.option('--audio_classes', default=10)
+@click.option('--load_weights', default=None)
+@click.option('--freeze_layers/--unfrozen_layers', default=False)
+def execute_scenarios(scenario, noise, directory, max_epochs, audio_classes, load_weights, freeze_layers):
+    if freeze_layers:
+        nn_model = SoundVGGishFrozenLayers
+    else:
+        nn_model = SoundVGGish
 
-            prob_ec_cached = '{}/{}/prob_ec_cached.pl'.format(start_path, folder)
-            if not os.path.isfile(prob_ec_cached):
-                prob_ec_cached = 'ProbLogFiles/prob_ec_cached.pl'.format(start_path)
-
-            event_defs = '{}/{}/event_defs.pl'.format(start_path, folder)
-            if not os.path.isfile(event_defs):
-                event_defs = 'ProbLogFiles/event_defs.pl'.format(start_path)
-
-            for subfolder in sorted(os.listdir(start_path + folder)):
-                # if subfolder != 'noise_1_00':
-                #     continue
-
-                if re.search(noise, subfolder) and os.path.isdir('{}/{}/{}'.format(start_path, folder, subfolder)):
-                    print('===================================================================================')
-                    print(subfolder)
-
-                    run_audio_with_validation(
-                        training_data='{}/{}/{}/init_train_data_clean.txt'.format(start_path, folder, subfolder),
-                        val_data='{}/{}/{}/init_val_data.txt'.format(start_path, folder, subfolder),
-                        test_data='{}/{}/{}/init_sound_test_data.txt'.format(start_path, folder, subfolder),
-                        problog_files=[
-                            prob_ec_cached,
-                            event_defs
-                        ],
-                        problog_train_files=[
-                            '{}/{}/{}/in_train_data.txt'.format(start_path, folder, subfolder)
-                        ],
-                        problog_val_files=[
-                            '{}/{}/{}/in_val_data.txt'.format(start_path, folder, subfolder)
-                        ],
-                        problog_test_files=[
-                            '{}/{}/{}/in_test_data.txt'.format(start_path, folder, subfolder)
-                        ],
-                        neural_predicate=neural_predicate_vggish,
-                        nn_model=SoundVGGish
-                    )
+    run_directory(
+        directory=directory,
+        scenario=scenario,
+        noise=noise,
+        load_weights=load_weights,
+        nn_model=lambda: nn_model(n_classes=audio_classes),
+        nn_name='sound_net',
+        max_epochs=max_epochs,
+        validation_function=audio_validation,
+        test_function=my_test,
+        neural_predicate=neural_predicate_vggish,
+        class_type='sound',
+    )
 
 
 if __name__ == '__main__':

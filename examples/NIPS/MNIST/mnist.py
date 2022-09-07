@@ -8,6 +8,7 @@ import os
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
 
+
 class MNIST_Net(nn.Module):
     def __init__(self, N=10):
         super(MNIST_Net, self).__init__()
@@ -33,6 +34,15 @@ class MNIST_Net(nn.Module):
         x = x.view(-1, 16 * 4 * 4)
         x = self.classifier(x)
         return x
+
+
+class MNISTNetFrozenEncoder(MNIST_Net):
+    def __init__(self, N=10):
+        super(MNISTNetFrozenEncoder, self).__init__(N)
+
+        print("FREEZING ENCODER WEIGHTS!!!")
+        for p in self.encoder.parameters():
+            p.requires_grad = False
 
 
 def test_MNIST(model,max_digit=10,name='mnist_net'):

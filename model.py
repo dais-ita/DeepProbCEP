@@ -127,14 +127,14 @@ class Model(object):
                 with zipf.open(n,'w') as f:
                     self.networks[n].save(f)
 
-    def load_state(self, location):
+    def load_state(self, location, *args, **kwargs):
         with ZipFile(location) as zipf:
             with zipf.open('parameters') as f:
                 self.parameters = pickle.load(f)
             for n in self.networks:
                 with zipf.open(n) as f:
                     buffer = io.BytesIO(f.read())
-                    self.networks[n].load(buffer)
+                    self.networks[n].load(buffer, *args, **kwargs)
 
     def store(self, object):
         self.obj_store.append(object)

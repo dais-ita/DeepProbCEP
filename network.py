@@ -43,8 +43,15 @@ class Network(object):
             self.optimizer.step()
             self.optimizer.zero_grad()
 
-    def load(self, location):
-        self.net.load_state_dict(torch.load(location))
+    def load(self, location, *args, **kwargs):
+        loaded_state_dict = torch.load(location)
+
+        if 'strict' in kwargs and not kwargs['strict']:
+            for key, value in self.net.state_dict().items():
+                if key in loaded_state_dict and loaded_state_dict[key].shape != value.shape:
+                    del loaded_state_dict[key]
+
+        self.net.load_state_dict(loaded_state_dict, *args, **kwargs)
 
     def save(self, location):
         torch.save(self.net.state_dict(), location)

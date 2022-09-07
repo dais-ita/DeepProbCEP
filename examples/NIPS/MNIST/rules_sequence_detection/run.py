@@ -11,6 +11,7 @@ if __name__ == '__main__':
             print("#######################################################################################")
             print(folder)
 
+            raise Exception("Validate arguments below")
             run(
                 '../complex_sequence_detection/init_train_data.txt',
                 '../complex_sequence_detection/init_digit_test_data.txt',

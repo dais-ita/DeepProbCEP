@@ -42,6 +42,18 @@ class SoundVGGish(nn.Module):
         return self.net(x)
 
 
+class SoundVGGishFrozenLayers(SoundVGGish):
+    def __init__(self, n_classes=10):
+        super(SoundVGGishFrozenLayers, self).__init__(n_classes=n_classes)
+
+        print("FREEZING LAYERS!!!")
+        for p in self.net[0].parameters():
+            p.requires_grad = False
+
+        for p in self.net[2].parameters():
+            p.requires_grad = False
+
+
 class SmallSoundVGGish(nn.Module):
     def __init__(self, n_classes=10):
         super(SmallSoundVGGish, self).__init__()

@@ -1,9 +1,4 @@
 import os
-import sys
-
-from examples.NIPS.ActivityDetection.prob_ec_testing import test
-from examples.NIPS.MNIST.mnist import MNIST_Net, test_MNIST, neural_predicate
-from examples.NIPS.MNIST.noisy_sequence_detection.run import run
 
 if __name__ == '__main__':
     for folder in sorted(os.listdir(os.curdir)):

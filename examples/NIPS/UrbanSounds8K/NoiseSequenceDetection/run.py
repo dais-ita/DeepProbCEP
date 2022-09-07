@@ -1,14 +1,11 @@
-import os
-import re
 import sys
 from data_loader import load
 import click
 
-from examples.NIPS.ActivityDetection.prob_ec_testing import test
-from examples.NIPS.UrbanSounds8K import neural_predicate_vggish
+from examples.NIPS.prob_ec_testing import test
 from train import epoch_train_model
-from examples.NIPS.MNIST.noisy_sequence_detection.run import make_problog_strings, get_problog_file_for, run_directory
-from examples.NIPS.UrbanSounds8K.SequenceDetection.run import run_linear, my_test
+from examples.NIPS.MNIST.noisy_sequence_detection.run import make_problog_strings, run_directory
+from examples.NIPS.UrbanSounds8K.SequenceDetection.run import my_test
 from examples.NIPS.UrbanSounds8K.sounds_utils import *
 from model import Model
 from optimizer import Optimizer

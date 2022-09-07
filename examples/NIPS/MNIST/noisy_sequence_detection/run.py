@@ -1,20 +1,17 @@
-import time
-
 import os
 import re
 import sys
 
 import click
 
-from examples.NIPS.ActivityDetection.prob_ec_testing import test
-from examples.NIPS.MNIST.mnist import MNIST_Net, test_MNIST, MNISTNetFrozenEncoder
+from examples.NIPS.prob_ec_testing import test
+from examples.NIPS.MNIST.mnist import MNIST_Net, MNISTNetFrozenEncoder
 from examples.NIPS.MNIST.mnist import neural_predicate as default_neural_predicate
 
 sys.path.append('../../../')
-from train import train_model, train, batch_train_model, train_batch, epoch_train_model
-from test_utils import get_confusion_matrix, calculate_f1
+from train import epoch_train_model
 from data_loader import load
-from model import Model, Var
+from model import Model
 from optimizer import Optimizer
 from network import Network
 import torch

@@ -1,11 +1,5 @@
-import json
-
-import problog
-import sys
-
-from examples.NIPS.UrbanSounds8K.sounds_utils import SoundsUtils, SoundLinearNet, neural_predicate_linear, SoundCNNet, \
-    SoundVGGish, neural_predicate_vggish
-from examples.NIPS.ActivityDetection.prob_ec_testing import test
+from examples.NIPS.UrbanSounds8K.sounds_utils import SoundVGGish, neural_predicate_vggish
+from examples.NIPS.prob_ec_testing import test
 from examples.NIPS.MNIST.complex_sequence_detection.run import add_files_to
 from train import train_model
 from data_loader import load

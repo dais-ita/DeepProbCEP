@@ -2,7 +2,7 @@ from TwoOutput3DResNet.Transformations.spatial_transforms import get_spatial_tra
 
 import sys
 
-from examples.NIPS.ActivityDetection.prob_ec_testing import test
+from examples.NIPS.prob_ec_testing import test
 
 sys.path.append('../../../')
 from train import train_model, train

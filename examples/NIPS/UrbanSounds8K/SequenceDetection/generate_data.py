@@ -1,4 +1,5 @@
 import json
+import argparse
 
 import torchvision
 from examples.NIPS.generate_data_utils import gather_examples
@@ -56,6 +57,20 @@ def get_urban_sound_datasets_with_validation(validation_fold=9, test_fold=10):
     training = preprocessable[(preprocessable['fold'] != validation_fold) & (preprocessable['fold'] != test_fold)]
     validation = preprocessable[preprocessable['fold'] == validation_fold]
     testing = preprocessable[preprocessable['fold'] == test_fold]
+
+    return training, validation, testing
+
+
+def get_urban_sound_datasets_from_args():
+    parser = argparse.ArgumentParser(description='Execute the strawman approach.')
+    parser.add_argument('val_fold', metavar='N', type=int, help='the fold to use for validation')
+    parser.add_argument('test_fold', metavar='N', type=int, help='the fold to use for testing')
+
+    args = parser.parse_args()
+
+    training, validation, testing = get_urban_sound_datasets_with_validation(
+        validation_fold=args.val_fold, test_fold=args.test_fold
+    )
 
     return training, validation, testing
 

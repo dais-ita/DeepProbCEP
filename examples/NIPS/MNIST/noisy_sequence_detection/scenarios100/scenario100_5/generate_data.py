@@ -1,11 +1,6 @@
 from examples.NIPS.MNIST.noisy_sequence_detection.old_scenarios.scenario001 import generate_data
-
-
-def get_correct_digit_for_initiated_at(digit, last_digits, threshold, available_digits):
-    if digit in last_digits:
-        return digit, True
-
-    return None, None
+from examples.NIPS.MNIST.noisy_sequence_detection.scenarios100.scenario100_2.generate_data import \
+    get_correct_digit_for_initiated_at
 
 
 if __name__ == '__main__':

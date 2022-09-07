@@ -4,15 +4,12 @@ import random
 from examples.NIPS.MNIST.noisy_sequence_detection.scenarios100.scenario100_2.generate_data import generate_data, \
     get_correct_digit_for_initiated_at
 from examples.NIPS.MNIST.noisy_sequence_detection.noisy_scenarios.scenario108_2.generate_data import get_initiated_at_scenario108
-from examples.NIPS.UrbanSounds8K.SequenceDetection.generate_data import sound_true_values, get_urban_sound_datasets
+from examples.NIPS.UrbanSounds8K.SequenceDetection.generate_data import sound_true_values, \
+    get_urban_sound_datasets_from_args
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Execute the strawman approach.')
-    parser.add_argument('test_fold', metavar='N', type=int, help='the fold to use for testing')
 
-    args = parser.parse_args()
-
-    t_loader, v_loader = get_urban_sound_datasets(base_folder='../..', test_fold=args.test_fold)
+def make_audio_scenario108_for_window(window):
+    training, validation, testing = get_urban_sound_datasets_from_args()
 
     all_events = [
         'air_conditioner',
@@ -43,11 +40,18 @@ if __name__ == '__main__':
             *args, **kwargs, swap=(swap_from, swap_to)
         ),
         test_function=get_correct_digit_for_initiated_at,
-        relevant_digits=1,
-        training_set=t_loader,
-        testing_set=v_loader,
+        relevant_digits=window,
+        training_set=training,
+        validating_set=validation,
+        testing_set=testing,
         start_sequence=['air_conditioner', 'children_playing', 'drilling', 'gun_shot', 'siren'],
         end_sequence=['car_horn', 'dog_bark', 'engine_idling', 'jackhammer', 'street_music'],
         get_true_values=sound_true_values,
         network_clause='sound',
+        create_initiated_wildcards_training=True,
+        create_initiated_wildcards_testing=True
     )
+
+
+if __name__ == '__main__':
+    make_audio_scenario108_for_window(1)

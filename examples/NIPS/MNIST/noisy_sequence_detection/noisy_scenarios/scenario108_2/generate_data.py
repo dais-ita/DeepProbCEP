@@ -14,14 +14,17 @@ def get_initiated_at_scenario108(digit, last_digits, threshold, available_digits
     return None, None
 
 
-if __name__ == '__main__':
-    available_digits = list(range(10))
+def make_scenario108_for_window(window):
+    # available_digits = list(range(10))
+    #
+    # swap_from = random.choice(available_digits)
+    # swap_to = random.choice(available_digits)
+    # # Ensure that we are not swapping a number for itself
+    # while swap_from == swap_to:
+    #     swap_to = random.choice(available_digits)
 
-    swap_from = random.choice(available_digits)
-    swap_to = random.choice(available_digits)
-    # Ensure that we are not swapping a number for itself
-    while swap_from == swap_to:
-        swap_to = random.choice(available_digits)
+    swap_from = 0
+    swap_to = 1
 
     with open('swap.txt', 'w') as o:
         o.write('{},{}'.format(swap_from, swap_to))
@@ -31,7 +34,11 @@ if __name__ == '__main__':
             *args, **kwargs, swap=(swap_from, swap_to)
         ),
         test_function=get_correct_digit_for_initiated_at,
-        relevant_digits=1,
+        relevant_digits=window,
         create_initiated_wildcards_training=True,
         create_initiated_wildcards_testing=True
     )
+
+
+if __name__ == '__main__':
+    make_scenario108_for_window(1)
